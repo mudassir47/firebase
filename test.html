@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Code Generator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Code Generator</h1>
+    <label for="databaseRef">Enter Database Reference:</label>
+    <input type="text" id="databaseRef" placeholder="e.g., user">
+    <label>
+      <input type="checkbox" id="showTotal" onclick="toggleTotalInput()"> Show Total Users
+    </label>
+    <label for="divtotal" id="totalInputLabel" style="display: none;">Enter total list div name:</label>
+    <input type="text" id="divtotal" placeholder="e.g., div totalUsers" style="display: none;">
+    <label for="divClassName">Enter Div Class Name:</label>
+    <input type="text" id="divClassName" placeholder="e.g., userList">
+    <div id="listViewInputs">
+      <label for="display_content_name">Enter ListView Text:</label>
+      <input type="text" class="listItem" placeholder="e.g., Name">
+    </div>
+    <button onclick="addListViewInput()">Add ListView Text</button>
+    <button onclick="generateCode()">Generate Code</button>
+    <textarea id="generatedCode" rows="10" readonly></textarea>
+  </div>
+<script>
+  function addListViewInput() {
+    const listViewInputs = document.getElementById('listViewInputs');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'listItem';
+    input.placeholder = 'Enter ListView Text';
+    listViewInputs.appendChild(document.createElement('br'));
+    listViewInputs.appendChild(input);
+  }
+
+  function toggleTotalInput() {
+    const totalInputLabel = document.getElementById('totalInputLabel');
+    const divTotal = document.getElementById('divtotal');
+    const checkbox = document.getElementById('showTotal');
+
+    if (checkbox.checked) {
+      totalInputLabel.style.display = 'block';
+      divTotal.style.display = 'block';
+    } else {
+      totalInputLabel.style.display = 'none';
+      divTotal.style.display = 'none';
+    }
+  }
+
+  function generateCode() {
+    const databaseRef = document.getElementById('databaseRef').value;
+    const divClassName = document.getElementById('divClassName').value;
+    const showTotal = document.getElementById('showTotal').checked;
+    
+    const listViewItems = document.getElementsByClassName('listItem');
+    let listViewCode = '';
+
+    for (let i = 0; i < listViewItems.length; i++) {
+      listViewCode += `${listViewItems[i].value}: \${userdata.${listViewItems[i].value.toLowerCase()}}, `;
+    }
+    
+    let totalUsersCode = '';
+    let countCode = '';
+
+    if (showTotal) {
+      const divTotal = document.getElementById('divtotal').value;
+      totalUsersCode = `
+        const ${divTotal} = document.getElementById("${divTotal}"); 
+        ${divTotal}.textContent = count;
+      `;
+      countCode = 'count++;';
+    }
+
+    const generatedCode = `const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const useref = ref(database, "${databaseRef}");
+   
+    function fetchuser() {
+      get(useref).then((snapshot) => {
+        const userlist = document.getElementById("${divClassName}");
+        let count = 0;
+        userlist.innerHTML = '';
+
+        snapshot.forEach((element) => {
+          const userdata = element.val();
+          const listitem = document.createElement('li');
+          listitem.textContent = \`${listViewCode}\`;
+          userlist.appendChild(listitem);
+          ${countCode}
+        });
+
+        ${totalUsersCode}
+      }).catch((error) => {
+        console.log("Error fetching users: ", error);
+      });
+    }
+
+    fetchuser();`;
+
+    document.getElementById('generatedCode').value = generatedCode;
+  }
+</script>
+</body>
+</html>

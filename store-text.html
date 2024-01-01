@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+          
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .input-fields {
+            margin-bottom: 20px;
+        }
+
+        .input-fields label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .input-fields input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+    </style>
+     <!-- <link rel="stylesheet" href="styles.css"> -->
+</head>
+<body><div>
+
+    <nav class="navbar">
+        <ul>
+            <li><a href="store-text.html">Add text to firebase</a></li>
+            <li><a href="search-add.html"> search firebase data </a></li>
+            <li><a href="home.html">Add data to listview</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+</div>
+
+    <div class="container">
+        <h1>Form Generator</h1>
+        <div class="input-fields" id="inputFields">
+            <label>Form ID</label>
+            <input type="text" id="form" placeholder="Enter the form ID">
+            <label>Firebase Reference</label>
+            <input type="text" id="ref" placeholder="Enter the Firebase reference">
+            <div id="inputFieldGroup">
+                <label>Input ID 1</label>
+                <input type="text" class="inputId" placeholder="Enter the input text ID">
+            </div>
+        </div>
+        <button class="btn" onclick="addInput()">Add Input</button>
+        <div class="input-fields">
+            <label>Submit Button</label>
+            <input type="text" id="submit" placeholder="Enter the submit button ID">
+        </div>
+        <button class="btn" onclick="generateCode()">Generate Code</button>
+        <textarea id="generatedCode" rows="10" readonly placeholder="Generated JavaScript code will appear here"></textarea>
+    </div>
+
+    <script>
+        let inputCount = 1;
+
+        function addInput() {
+            inputCount++;
+            const inputFieldGroup = document.getElementById('inputFieldGroup');
+            const newInput = document.createElement('div');
+            newInput.innerHTML = `<label>Input ID ${inputCount}</label>
+                                  <input type="text" class="inputId" placeholder="Enter the input text ID">`;
+            inputFieldGroup.appendChild(newInput);
+        }
+
+        function generateCode() {
+            const form = document.getElementById('form').value.trim();
+            const submit = document.getElementById('submit').value.trim();
+            const ref = document.getElementById('ref').value.trim();
+            let generatedCode = `const ${form} = document.getElementById("${form}");
+
+${form}.addEventListener("submit", (e) => {
+    e.preventDefault();`;
+
+            const inputIds = document.querySelectorAll('.inputId');
+            inputIds.forEach((input, index) => {
+                const inputId = input.value.trim();
+                generatedCode += `
+    const ${inputId} = document.getElementById("${inputId}").value;`;
+            });
+
+            generatedCode += `
+    const textRef = ref(database, "${ref}");
+    const newTextRef = push(textRef);
+    set(newTextRef, {`;
+
+            inputIds.forEach((input, index) => {
+                const inputId = input.value.trim();
+                generatedCode += `
+        ${inputId}: ${inputId},`;
+            });
+
+            generatedCode += `
+    })
+        .then(() => {
+            console.log("Text data uploaded successfully!");
+        })
+        .catch((error) => {
+            console.error("Error uploading text data: ", error);
+        });
+
+    // Clear the input fields after submission`;
+    
+            inputIds.forEach((input, index) => {
+                const inputId = input.value.trim();
+                generatedCode += `
+    document.getElementById("${inputId}").value = "";`;
+            });
+
+            generatedCode += `
+});`;
+
+            document.getElementById('generatedCode').value = generatedCode;
+        }
+    </script>
+</body>
+</html>
